@@ -68,12 +68,22 @@ A screenshot is perfect. `-0.1 km` and `-0.01 L` are normal: that's the
 session. The counters move as you drive, so values from different days can't
 be matched up.
 
-### Easier alternative, if your tool supports it
+### Why we can't just use a VCDS log
 
-If VCDS (or any scan tool) can save a **debug / trace log** containing the raw
-CAN frames, that one file gives us both sides from the same session — no need
-to run a second app or worry about timing. Look for a debug level setting, or
-a trace/log option. Redact the VIN before sending.
+VCDS's Controller Channel Map writes a CSV to `C:\Ross-Tech\VCDS\Logs`, and
+it does contain the Type 17 values — but only **decoded**:
+
+```
+IDE00371,Fuel consumption,0.69, l/h
+IDE01922,Vehicle distance driven,189700, km
+```
+
+No raw bytes. VCDS is a decoder; it never shows what came off the wire. That is
+exactly why both artefacts are needed: **VCDS gives the answer, a terminal app
+gives the question.** Only together do they reveal the layout.
+
+(VCDS's separate *debug-level* logging may capture raw frames — unverified. If
+you know, please say.)
 
 ### 3. Your car
 

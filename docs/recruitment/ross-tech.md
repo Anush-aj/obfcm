@@ -54,10 +54,11 @@ person: they have the cars, the tool, and they published freely once already.
 > It does have to be the same sitting — the counters move, so I can't pair
 > your 2023 figures with today's hex. Read-only command, and blank the VIN.
 >
-> **If VCDS debug or trace logging captures the raw frames underneath the
-> decoded output, that single file would be even better** — both sides from
-> one session, no second app needed. You'd know far better than me whether
-> that's how it works.
+> I did wonder whether a Controller Channel Map CSV would carry the raw
+> frames, but from the logs posted on the forum it looks like those are
+> decoded-only (`IDE00371,Fuel consumption,0.69, l/h`). If VCDS's debug-level
+> logging captures the frames underneath, that one file would do it — you'd
+> know far better than me.
 >
 > The decoder is written and tested: https://github.com/Anush-aj/obfcm —
 > protocol handling, ISO-TP reassembly, plausibility validation and the
@@ -70,11 +71,28 @@ person: they have the cars, the tool, and they published freely once already.
 
 **One reply with the hex finishes the project.**
 
+## Both OBFCM threads are locked
+
+| Thread | Date | Status |
+|---|---|---|
+| 36805 "What is OBFCM.. information" (Uwe's Bar) | Apr 2023 | **Locked** |
+| "How to read information obfcm module europe" (New User Forum) | Oct 2024 | **Locked** |
+
+Ross-Tech appears to close threads routinely. So the options are a **DM** or a
+**new thread** — there is nothing live to reply to.
+
+### Other people worth messaging
+
+| Member | Why |
+|---|---|
+| **NEtech** | VCDS Distributor, Denmark. Published readouts from a dozen cars. Best reach. |
+| **jbakkerxli** | Netherlands, **2021 Audi A3 2.0 TDI** — a mandate-era car. Actively tried to read OBFCM and gave up. Would *get something back* from this, so it's a trade rather than a favour. |
+| **TTT** | Netherlands, 2,388 posts, confirmed pulling address-33 data successfully. |
+
 ## Plan B — a new thread on Ross-Tech
 
-Only after trying Plan A, and check the forum rules on necroposting and
-self-promotion first. Post it as a technical question, link back to 36805 as
-context, and use the text below.
+Check the rules on self-promotion first. Post it as a technical question and
+link 36805 for context. Use the text below.
 
 ## Plan C — everywhere else
 
