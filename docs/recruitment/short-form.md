@@ -13,13 +13,13 @@ wall of text would be rude.
 > publish it MIT. If you have a 2021+ EU/UK car: send `0917` in your OBD app's
 > terminal, screenshot the reply, plus your VCDS/OBDeleven lifetime fuel+distance
 > screen. Read-only command, redact your VIN. Takes two minutes and you'd be
-> credited.
+> credited. https://github.com/Anush-aj/obfcm
 
 ## One-line version
 
 > Anyone here with a 2021+ EU car and a dongle? Need one screenshot of `0917`
 > from your OBD app terminal — trying to open-source the EU fuel-counter format.
-> Read-only, 2 minutes, happy to explain.
+> Read-only, 2 minutes, happy to explain. https://github.com/Anush-aj/obfcm
 
 ## If someone asks "what's in it for you?"
 

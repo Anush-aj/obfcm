@@ -93,7 +93,8 @@ want it.
 
 ## Where to send it
 
-Open an issue on the repository, or reply in the thread you found this in.
+**Open an issue: https://github.com/Anush-aj/obfcm/issues** — or just reply in the
+thread you found this in, whichever is easier.
 
 ---
 
