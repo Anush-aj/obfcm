@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run the zero-dependency test script
+        run: ./run_tests.sh
+
+      - name: Install the package (no runtime deps)
+        run: python -m pip install --upgrade pip && python -m pip install .
+
+      - name: Import the installed package
+        working-directory: /tmp
+        run: |
+          python - <<'PY'
+          import obfcm
+          assert obfcm.__version__ == "0.1.0", obfcm.__version__
+          payload = bytes.fromhex(
+              "01 00 00 30 E0 00 00 30 EB 00 00 72 4A 00 00 72 7E"
+          )
+          rec = obfcm.decode(payload, allow_unverified=True)
+          assert rec.layout_id == "type17-v1"
+          assert rec.layout_verified is False
+          assert abs(rec.total_distance_km - 1252.3) < 1e-9
+          assert abs(rec.total_fuel_l - 293.10) < 1e-9
+          print("installed obfcm", obfcm.__version__, rec.summary())
+          PY
+
+      - name: Build sdist and wheel
+        run: python -m pip install build && python -m build

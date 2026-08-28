@@ -291,6 +291,8 @@ def test_protocol():
 # ---------------------------------------------------------------------------
 
 def test_layouts():
+    check("package version is 0.1.0", obfcm.__version__ == "0.1.0",
+          obfcm.__version__)
     check("no verified layout yet (honest default)",
           obfcm.verified_layouts() == [])
     check("hypothesis is marked unverified",
@@ -369,12 +371,58 @@ def test_real_capture():
     check("Ford E-350: survives ISO-TP round trip",
           bytes(obfcm.parse_response(wire, "09", "17")) == payload)
 
+    # README Car Scanner / Torque formulas: after stripping mode/PID/index,
+    # A is the first of the 16 data bytes. This is the real Ford capture,
+    # not the constructed Golf 8 hex.
+    data = payload[1:]
+    check("Ford E-350: 16 data bytes after item-index", len(data) == 16)
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P = data
+    check("Ford E-350: formula recent km",
+          approx((A * 2**24 + B * 2**16 + C * 256 + D) / 10, 1251.2))
+    check("Ford E-350: formula lifetime km",
+          approx((E * 2**24 + F * 2**16 + G * 256 + H) / 10, 1252.3))
+    check("Ford E-350: formula recent L",
+          approx((I * 2**24 + J * 2**16 + K * 256 + L) / 100, 292.58))
+    check("Ford E-350: formula lifetime L",
+          approx((M * 2**24 + N * 2**16 + O * 256 + P) / 100, 293.10))
+
+
+# ---------------------------------------------------------------------------
+# python-OBD example decoder (no python-OBD installed)
+# ---------------------------------------------------------------------------
+
+def test_python_obd_example():
+    """The example strips SID+PID (or SID+DID) then calls obfcm.decode."""
+    import importlib.util
+    path = os.path.join(os.path.dirname(__file__), "..", "examples",
+                        "python_obd_type17.py")
+    spec = importlib.util.spec_from_file_location("python_obd_type17", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    class Msg:
+        def __init__(self, data):
+            self.data = data
+
+    ford = bytes.fromhex("01 00 00 30 E0 00 00 30 EB 00 00 72 4A 00 00 72 7E")
+    rec = mod.decode_type17([Msg(bytes.fromhex("4917") + ford)])
+    check("python-OBD example decodes 0917 Ford",
+          rec is not None and approx(rec.total_fuel_l, 293.10)
+          and approx(rec.total_distance_km, 1252.3), rec)
+    rec_uds = mod.decode_type17([Msg(bytes.fromhex("62F817") + ford)])
+    check("python-OBD example decodes 22F817 Ford",
+          rec_uds is not None and approx(rec_uds.total_fuel_l, 293.10))
+    check("python-OBD example empty messages",
+          mod.decode_type17([]) is None)
+    check("example does not mark the layout verified",
+          rec.layout_verified is False)
+
 
 # ---------------------------------------------------------------------------
 
 def main():
     for fn in (test_record, test_validate, test_decode, test_protocol,
-               test_layouts, test_real_capture):
+               test_layouts, test_real_capture, test_python_obd_example):
         fn()
     width = max(len(n) for n, _, _ in results)
     failed = 0

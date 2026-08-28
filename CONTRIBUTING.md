@@ -15,6 +15,7 @@ standing between this library and working.
 
 ```bash
 ./run_tests.sh          # everything, offline, no dependencies, no vehicle
+pip install .           # optional; the library has no runtime deps
 ```
 
 Three rules that matter here more than usual:

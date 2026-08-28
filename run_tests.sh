@@ -21,6 +21,29 @@ for f in tools/fixtures/*.log; do
         || { echo "  FAIL $f"; cat /tmp/obfcm_probe.txt; exit 1; }
 done
 echo
+echo "── example syntax ────────────────────────────────────────────"
+python3 -m py_compile examples/python_obd_type17.py
+echo "  ok   examples/python_obd_type17.py"
+echo
+echo "── OBDb SAEJ1979 InfoType 17 patch ───────────────────────────"
+python3 - <<'PY'
+import json
+from pathlib import Path
+data = json.loads(Path("docs/obdb-saej1979-itid17.json").read_text())
+cmds = data["commands"]
+assert any(c["cmd"] == {"09": "17"} for c in cmds), cmds
+assert any(c["cmd"] == {"22": "F817"} for c in cmds), cmds
+for c in cmds:
+    assert c["hdr"] == "7E0" and c["rax"] == "7E8", c
+    assert len(c["signals"]) == 4, c
+    for s in c["signals"]:
+        fmt = s["fmt"]
+        for key in ("bix", "len", "div", "unit"):
+            assert key in fmt, (s["id"], fmt)
+assert all(s["fmt"]["bix"] == 8 for c in cmds for s in c["signals"] if s["id"] == "OBFCM_DIST_REC")
+print(f"  ok   {len(cmds)} commands, Mode 09 ITID 17 and UDS F817")
+PY
+echo
 echo "── read-only safety guard ────────────────────────────────────"
 python3 - <<'PY'
 import sys; sys.path.insert(0, "tools")
