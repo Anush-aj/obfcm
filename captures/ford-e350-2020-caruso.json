@@ -1,0 +1,13 @@
+[
+  {
+    "label": "2020 Ford E-350 conversion van, ~2300 miles (Steve Caruso, CarDAQ-Plus 3, 2020-10-06)",
+    "raw": "49 17 01 00 00 30 E0 00 00 30 EB 00 00 72 4A 00 00 72 7E",
+    "known": {
+      "recent_distance_km": 1251.2,
+      "total_distance_km": 1252.3,
+      "recent_fuel_l": 292.58,
+      "total_fuel_l": 293.10
+    },
+    "notes": "REAL PAIRED CAPTURE -- the first one. Source: Steve Caruso Automotive Consultant, CarDAQ-Plus 3 / OBDrScanTool, address 33 Scan-Tool, Module E8 PCM, Mode 9 INFO TYPE 17. The scan tool printed the 16 data bytes (without the 49 17 01 header) alongside the four decoded Recent/Lifetime values in the same log; '49 17 01' is prepended here so the payload matches what a live 0917 ISO-TP reassembly produces (item index 01, same convention as VIN). US 2020 GHG tracking, same SAE J1979-DA ITID $17 as EU OBFCM. VIN redacted in the public PDF. Same log also carries Type 16/18/19 raw+decoded."
+  }
+]

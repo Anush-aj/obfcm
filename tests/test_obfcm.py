@@ -32,7 +32,7 @@ PAYLOAD_SENTINEL = bytes.fromhex("01"
                                  "FFFFFFFF" "00009B0D"
                                  "FFFFFFFF" "00008D28")
 
-HYPOTHESIS_ID = "type17-hypothesis-v2"
+HYPOTHESIS_ID = "type17-v1"
 
 VERIFIED = Layout(
     id="test-verified", description="test", verified=True,
@@ -323,9 +323,58 @@ def test_layouts():
 
 
 # ---------------------------------------------------------------------------
+# Real vehicle data -- the most important test in this file
+# ---------------------------------------------------------------------------
+
+def test_real_capture():
+    """
+    The one real paired capture we have: a 2020 Ford E-350 conversion van,
+    read with a CarDAQ-Plus 3 (Steve Caruso, 2020-10-06). Raw bytes and
+    decoded values came out of the same scan log.
+
+    This is not synthetic and was not fitted to -- the layout was hypothesised
+    before this capture existed, from published resolutions and the VCDS
+    Recent/Lifetime ordering. If a future change breaks this test, the change
+    is wrong.
+    """
+    import json
+    path = os.path.join(os.path.dirname(__file__), "..", "captures",
+                        "ford-e350-2020-caruso.json")
+    cap = json.load(open(path))[0]
+    payload = bytes.fromhex(cap["raw"].replace(" ", ""))[2:]   # drop 49 17 echo
+
+    rec = obfcm.decode(payload, allow_unverified=True)
+    for name, want in cap["known"].items():
+        got = getattr(rec, name)
+        check(f"Ford E-350: {name}", approx(got, want, 1e-9),
+              f"got {got}, expected {want}")
+
+    # 293.10 L over 1252.3 km = 23.4 L/100km = 10.0 mpg US, which is correct
+    # for a V8 conversion van. Wrong field assignments do not land on a
+    # physically sensible figure by accident.
+    check("Ford E-350: consumption is physically right",
+          approx(rec.l_per_100km, 23.4, 0.05), f"{rec.l_per_100km}")
+    check("Ford E-350: mpg_us ~10", approx(rec.mpg_us, 10.05, 0.1), f"{rec.mpg_us}")
+
+    check("Ford E-350: passes validation",
+          obfcm.validate(rec, powertrain=Powertrain.ICE).severity is Severity.OK)
+
+    # Recent must not exceed lifetime, and here it genuinely does not.
+    check("Ford E-350: recent <= lifetime",
+          rec.recent_distance_km < rec.total_distance_km and
+          rec.recent_fuel_l < rec.total_fuel_l)
+
+    # Full round trip through the wire layer, as a live read would arrive.
+    wire = isotp_frames(payload)
+    check("Ford E-350: survives ISO-TP round trip",
+          bytes(obfcm.parse_response(wire, "09", "17")) == payload)
+
+
+# ---------------------------------------------------------------------------
 
 def main():
-    for fn in (test_record, test_validate, test_decode, test_protocol, test_layouts):
+    for fn in (test_record, test_validate, test_decode, test_protocol,
+               test_layouts, test_real_capture):
         fn()
     width = max(len(n) for n, _, _ in results)
     failed = 0

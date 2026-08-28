@@ -51,8 +51,9 @@ the same car, the layout is recoverable by constraint search.
 | Decoding, records, derived metrics | ✅ done |
 | Plausibility validation | ✅ done, 70/70 tests |
 | Layout solver | ✅ done, self-verifying |
-| Record shape, scales, sentinel | ✅ **known** — see below |
-| **The byte offsets** | ❌ **needs one paired capture** |
+| Record shape, scales, sentinel | ✅ known |
+| **The byte layout** | ✅ **solved from a real capture** — see below |
+| Confirmation on a European vehicle | ❌ **one capture away** |
 
 Everything is finished except one table. When the solver produces a layout, it
 drops into [`obfcm/layouts.py`](obfcm/layouts.py) and the library works.
@@ -83,10 +84,42 @@ Type 17 - Vehicle Operation Data - Distance-Fuel Used, Recent/Lifetime:
 Largest values observed — 6,886.07 L and 59,663.0 km — mean fields need at
 least 3 bytes.
 
-**What is still missing is the byte offsets**, and for that we need raw hex and
-decoded values from **the same car in the same session**. The published values
-are from 2023, so the counters have long since moved on and cannot be paired
-with fresh hex.
+### The layout, solved
+
+A **real paired capture** — raw bytes and decoded values from the same scan log
+— settled it. 2020 Ford E-350 conversion van, CarDAQ-Plus 3, Mode 9 InfoType 17
+(Steve Caruso, 2020-10-06):
+
+```
+payload:  01 00 00 30 E0 00 00 30 EB 00 00 72 4A 00 00 72 7E
+
+bytes[1:5]   0x000030E0 = 12512  x 1/10   = 1251.2 km   recent distance
+bytes[5:9]   0x000030EB = 12523  x 1/10   = 1252.3 km   lifetime distance
+bytes[9:13]  0x0000724A = 29258  x 1/100  =  292.58 L   recent fuel
+bytes[13:17] 0x0000727E = 29310  x 1/100  =  293.10 L   lifetime fuel
+```
+
+All four match the scan tool exactly. And the result is physically right:
+293.10 L over 1252.3 km is **23.4 L/100km = 10.0 mpg US**, which is what a V8
+conversion van does. Wrong field assignments do not land on a sensible figure
+by accident.
+
+The layout was hypothesised *before* this capture existed, from the published
+resolutions and the VCDS Recent/Lifetime ordering — so this is confirmation,
+not curve-fitting. It is now a regression test (`tests/test_obfcm.py`).
+
+**A notable side effect:** this is a *US* vehicle. US light-duty has no OBFCM
+mandate, but it carries the same SAE J1979-DA ITID $17 for GHG tracking. The
+addressable fleet may be far larger than the EU/UK 2021+ population.
+
+### What is still missing
+
+`verified=False`, deliberately. The layout is confirmed on **one US Ford**.
+Whether VAG, BMW or Stellantis order the fields identically is untested — and
+per [CONTRIBUTING.md](CONTRIBUTING.md), a layout earns `verified=True` only
+after decoding three different vehicles with no special-casing.
+
+**One European capture would flip it.**
 
 ### The library already reproduces the thread
 

@@ -79,6 +79,32 @@ NICE_DENOMINATORS = {
 }
 MAX_NICE_NUMERATOR = 10
 
+# Largest values actually observed in the wild, used to eliminate candidate
+# field widths that physically could not hold them. From the 14 vehicles in
+# captures/reference-vcds-thread-36805.json -- an Audi SQ7 at 6,886.07 L and
+# 59,663.0 km. A 2-byte field at 1/100 tops out at 655.35 L, so it cannot be
+# the fuel field no matter how well it fits one capture.
+#
+# This is a legitimate use of decoded-only data: it constrains widths without
+# ever being paired against hex, so it cannot make the solve circular.
+OBSERVED_MAXIMA = {
+    "total_fuel_l": 6886.07,
+    "recent_fuel_l": 6886.07,
+    "fuel_charge_depleting_l": 6886.07,
+    "fuel_charge_increasing_l": 6886.07,
+    "total_distance_km": 59663.0,
+    "recent_distance_km": 59663.0,
+    "distance_charge_depleting_engine_off_km": 59663.0,
+    "distance_charge_depleting_engine_on_km": 59663.0,
+    "distance_charge_increasing_km": 59663.0,
+}
+
+
+def width_can_hold(width: int, scale: Fraction, max_value: float) -> bool:
+    """True if a `width`-byte field at `scale` can represent `max_value`."""
+    return ((1 << (width * 8)) - 1) * scale >= Fraction(str(max_value))
+
+
 # Scales the regulation's resolutions imply, checked first and reported as
 # "expected" when they turn up.
 EXPECTED_SCALES = {
@@ -244,6 +270,9 @@ def solve_field(captures: Sequence[Capture],
                 if ok and scale is not None:
                     if require_plausible and not is_plausible_scale(scale):
                         continue
+                    ceiling = OBSERVED_MAXIMA.get(field)
+                    if ceiling and not width_can_hold(width, scale, ceiling):
+                        continue      # too narrow for values seen in the wild
                     results.append(FieldLayout(offset, width, endian, scale))
 
     # Prefer wider fields at lower offsets, and "rounder" scales.

@@ -116,15 +116,24 @@ LAYOUTS: Dict[str, Layout] = {
     # Still unknown: the actual byte offsets, the true field width (3 vs 4),
     # and whether a record-count or length byte precedes the fields.
     # -----------------------------------------------------------------
-    "type17-hypothesis-v2": Layout(
-        id="type17-hypothesis-v2",
-        description="Type 17 Distance-Fuel Used, Recent/Lifetime pairs (HYPOTHESIS)",
+    "type17-v1": Layout(
+        id="type17-v1",
+        description="Type 17 Distance-Fuel Used, Recent/Lifetime pairs",
         verified=False,
-        source=("Shape constrained by Ross-Tech thread 36805: VCDS label "
-                "ENG121352 gives the order as '(Recent), (Lifetime)', distance "
-                "before fuel. Largest observed values (6,886.07 L on an Audi "
-                "SQ7; 59,663.0 km) need 3 bytes at 1/100 and 1/10, so 4 bytes "
-                "is the natural field width. Offsets are still guesses."),
+        source=(
+            "Derived from a REAL paired capture -- 2020 Ford E-350 conversion "
+            "van, CarDAQ-Plus 3, Mode 9 InfoType 17 (Steve Caruso, 2020-10-06). "
+            "Raw payload 01 00 00 30 E0 00 00 30 EB 00 00 72 4A 00 00 72 7E "
+            "against decoded 1251.2/1252.3 km and 292.58/293.10 L. All four "
+            "fields match exactly, and 293.10 L over 1252.3 km is 23.4 L/100km "
+            "= 10.0 mpg US, which is right for that vehicle. "
+            "Field widths further constrained by the 14 VCDS vehicles in "
+            "captures/reference-vcds-thread-36805.json: an Audi SQ7 at "
+            "6,886.07 L rules out 2-byte fields. "
+            "STILL verified=False: confirmed on one US Ford only. Whether VAG, "
+            "BMW or Stellantis order the fields identically is untested. One "
+            "European capture flips this."
+        ),
         fields={
             "recent_distance_km": FieldSpec(offset=1, width=4, scale=Fraction(1, 10)),
             "total_distance_km": FieldSpec(offset=5, width=4, scale=Fraction(1, 10)),
