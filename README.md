@@ -13,7 +13,8 @@ And yet no free app reads it, and until now no open-source project could.
 ```
 $ python3 tools/obd_probe.py --serial /dev/tty.OBDII
     Trying classic OBD:  09 17
-    RESPONDED with 9 bytes: 01 00 00 8b f9 00 00 9a b1
+    RESPONDED with 17 bytes: 01 00 00 9a b1 00 00 9b 0d 00 00 8b f9 00 00 8d 28
+    Wrote obfcm_capture.json -- a solver-ready capture.
 ```
 
 ---
@@ -48,12 +49,58 @@ the same car, the layout is recoverable by constraint search.
 | Protocol — command selection, per-OEM addressing fallback | ✅ done |
 | ISO-TP reassembly — multi-frame, multi-ECU, 11 & 29-bit headers | ✅ done, 8/8 tests |
 | Decoding, records, derived metrics | ✅ done |
-| Plausibility validation | ✅ done, 64/64 tests |
+| Plausibility validation | ✅ done, 70/70 tests |
 | Layout solver | ✅ done, self-verifying |
-| **The byte layout itself** | ❌ **needs 3 vehicles** |
+| Record shape, scales, sentinel | ✅ **known** — see below |
+| **The byte offsets** | ❌ **needs one paired capture** |
 
 Everything is finished except one table. When the solver produces a layout, it
 drops into [`obfcm/layouts.py`](obfcm/layouts.py) and the library works.
+
+### What is already pinned down
+
+[Ross-Tech thread 36805](https://forums.ross-tech.com/index.php?threads/36805/)
+carries VCDS output for **14 vehicles** — VW, Audi, Škoda, SEAT, a MAN truck,
+across petrol, diesel, hybrid and battery-electric. Recorded in
+[`captures/reference-vcds-thread-36805.json`](captures/reference-vcds-thread-36805.json).
+It settles four things the regulation does not publish:
+
+```
+Type 17 - Vehicle Operation Data - Distance-Fuel Used, Recent/Lifetime:
+         Total Distance Traveled : 3960.1 km / 3969.3 km
+         Total Fuel Consumed : 358.33 L / 361.36 L
+```
+
+1. **Four values, not two.** Every parameter is a Recent/Lifetime pair.
+2. **Order:** distance before fuel, Recent before Lifetime — confirmed by the
+   VCDS label `ENG121352`.
+3. **Scales:** 1/10 for km, 1/100 for litres.
+4. **All-bits-set is a "not available" sentinel.** VCDS renders it signed,
+   which is why unpopulated windows print as `-0.1 km` and `-0.01 L`. Decoding
+   it as a number would silently corrupt every average. `FieldSpec.decode()`
+   returns `None`.
+
+Largest values observed — 6,886.07 L and 59,663.0 km — mean fields need at
+least 3 bytes.
+
+**What is still missing is the byte offsets**, and for that we need raw hex and
+decoded values from **the same car in the same session**. The published values
+are from 2023, so the counters have long since moved on and cannot be paired
+with fresh hex.
+
+### The library already reproduces the thread
+
+Two independent checks against data we did not fit to:
+
+| | |
+|---|---|
+| Škoda Karoq figures decoded | **14.87 km/l** — NEtech's stated figure: 14.86 |
+| 2018 Tiguan | `[IMPLAUSIBLE] CONSUMPTION_OUT_OF_RANGE` at 1.21 L/100km |
+
+That Tiguan is the one Ross-Tech's own staff dismissed by eye — Eric: *"type 17
+makes no sense on that Tiguan, that's 1.2 L/100km"*; Uwe: *"average speed has
+been something like 378 km/h!"* It is a documented instance of the ~12%
+corrupt-data rate that `validate()` exists to catch.
 
 ---
 
