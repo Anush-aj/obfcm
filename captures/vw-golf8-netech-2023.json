@@ -1,0 +1,13 @@
+[
+  {
+    "label": "VW Golf 8 (NEtech, Ross-Tech thread 36805, Apr 2023)",
+    "raw": null,
+    "known": {
+      "recent_distance_km": 3960.1,
+      "total_distance_km": 3969.3,
+      "recent_fuel_l": 358.33,
+      "total_fuel_l": 361.36
+    },
+    "notes": "HALF CAPTURE -- decoded values only, raw hex still needed. Source: VCDS [33-OBD] Mode 9 Type 17, posted publicly by NEtech (VCDS Distributor, Denmark). VCDS labels the columns 'Recent / Lifetime', so the first value of each pair is the recent window. Implied consumption: 9.10 L/100km lifetime, which is plausible for a Golf 8 and confirms the pairing is read the right way round."
+  }
+]

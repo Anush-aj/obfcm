@@ -211,6 +211,20 @@ def validate(record: Record,
                         "Charge-depleting plus charge-increasing fuel exceeds "
                         "total fuel consumed."))
 
+    # --- Recent vs lifetime coherence -------------------------------------
+    # Type 17 reports both. A "recent" counter above its lifetime counter is
+    # impossible and is a strong signal the field order is wrong -- which
+    # makes this a useful check while the layout is still being solved.
+    for recent_name, total_name in (("recent_fuel_l", "total_fuel_l"),
+                                    ("recent_distance_km", "total_distance_km")):
+        r, t = getattr(record, recent_name), getattr(record, total_name)
+        if r is not None and t is not None and r > t:
+            add(Finding(Severity.IMPLAUSIBLE, "RECENT_EXCEEDS_LIFETIME",
+                        f"{recent_name} ({r:,.2f}) exceeds {total_name} "
+                        f"({t:,.2f}). The recent window is a subset of the "
+                        f"vehicle's life, so this indicates a swapped or "
+                        f"misaligned field."))
+
     # --- Cross-check against the dashboard odometer -----------------------
     if odometer_km is not None and dist is not None and odometer_km > 0:
         ratio = dist / odometer_km

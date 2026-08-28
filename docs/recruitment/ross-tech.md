@@ -1,74 +1,85 @@
-# Ross-Tech forums — the highest-value audience
+# Ross-Tech — thread 36805 is LOCKED
 
-**Why here first:** thread 36805 already has VCDS owners posting their decoded
-OBFCM values voluntarily. They have the tool, they've already done half the
-work, and the paywall problem is exactly the kind of thing this audience finds
-annoying. Reply in that thread rather than starting a new one.
+**Checked 28 Aug 2026: thread 36805 shows "Not open for further replies."**
 
-**Tone:** technical peer asking for help, not a developer marketing an app.
-Do not mention any future paid product. There isn't one yet, and hinting at it
-here will get the post ignored.
+It is also not what I assumed. It is not an ongoing conversation with several
+owners posting values — it is a **single informational post by NEtech**
+(VCDS Distributor, Denmark, member since 2014, 4,519 messages) from
+**3 April 2023**, explaining OBFCM and pasting a full VCDS readout from a
+VW Golf 8.
 
-**Before posting:** read the last page or two of the thread. This draft assumes
-people are still posting decoded values and nobody has solved the layout. If
-that has changed, adjust — a reply that ignores the recent conversation reads
-badly and wastes the best audience you have.
+So: no reply is possible, and the "several people are already posting values"
+premise was wrong. But the post itself is worth more than a reply would have
+been — see `captures/vw-golf8-netech-2023.json`.
 
 ---
 
-## REPLY to thread 36805 — use this one
+## Plan A — message NEtech directly. Do this first.
 
-Short, joins the existing conversation, does not re-explain OBFCM to the people
-whose thread it is.
+Best single lead in the project. They have the car, the tool, the data, and
+demonstrated willingness to share it publicly. **We already hold half of
+vehicle #1** — we need only the raw hex from the same car.
+
+> **Subject:** OBFCM Type 17 — could I ask for the raw hex from your Golf 8?
+>
+> Hi NEtech,
+>
+> Your April 2023 post "What is OBFCM.. information" is the clearest write-up
+> of Type 17 I've found anywhere. The thread is locked, so I hope a direct
+> message is alright.
+>
+> I'm building an open-source OBFCM reader. The blocker is that the byte
+> layout is published only in SAE J1979-DA ($100–300) — the regulation gives
+> the parameter list but not the offsets or scaling, so no free tool can
+> decode it.
+>
+> Your post already gives me half the answer:
+>
+>     Total Distance Traveled : 3960.1 km / 3969.3 km
+>     Total Fuel Consumed     : 358.33 L / 361.36 L
+>
+> If I had the **raw hex** from that same car, the layout becomes solvable by
+> constraint search — those resolutions (0.1 km, 0.01 L) are fine enough that
+> a wrong offset almost never produces a plausible scale factor.
+>
+> So the ask, if you still have the Golf 8 and two minutes: in any OBD app
+> with a terminal, send `0917` and send me the raw reply. Read-only command,
+> and please blank the VIN.
+>
+> The decoder is already written and tested —
+> https://github.com/Anush-aj/obfcm — protocol handling, ISO-TP reassembly,
+> plausibility validation and the solver. It's missing exactly one table.
+> MIT licensed, and I'll PR it into python-OBD and the OBDb PID database so
+> any app can pick it up. Happy to credit you, or not, whichever you prefer.
+>
+> Either way — thank you for posting that readout publicly. It's the reason
+> this is tractable at all.
+
+**If they reply with the hex, vehicle #1 is complete.** Two more and the
+layout is solved.
+
+## Plan B — a new thread on Ross-Tech
+
+Only after trying Plan A, and check the forum rules on necroposting and
+self-promotion first. Post it as a technical question, link back to 36805 as
+context, and use the text below.
+
+## Plan C — everywhere else
+
+`reddit.md` (r/CarHacking first), `short-form.md` for Discords. Do not wait on
+Ross-Tech before running these; they are independent.
 
 ---
 
-Reading back through this thread, a few of you have posted your decoded OBFCM
-figures from Mode 09 Type 17 — total fuel consumed and total distance. Those
-posts are more useful than they look, and I'd like to ask for one small
-addition.
-
-The reason no free tool reads OBFCM is that the byte layout is only published
-in SAE J1979-DA ($100–300). The regulation gives you the parameter list but not
-the offsets or the scaling, so everyone either buys the standard or does
-without.
-
-But your decoded values plus the **raw hex from the same car** make the layout
-recoverable by constraint search. The resolutions are fine enough (0.01 L,
-0.1 km) that a wrong offset almost never produces a plausible scale factor, and
-three cars is enough to rule out coincidence.
-
-So if you have a 2021+ car and two minutes: in any OBD app with a terminal
-(Car Scanner, OBD Auto Doctor, Torque), send `0917` and post the raw reply
-alongside your VCDS Type 17 figures. It's a read-only request — service 09 is
-Request Vehicle Information, it can't write or reset anything. Please blank
-your VIN.
-
-`NO DATA` is a useful answer too. I need to know which cars want `22 F8 17`
-instead, and I gather VAG and BMW differ here.
-
-I've written the decoder already — https://github.com/Anush-aj/obfcm — protocol
-handling, ISO-TP reassembly, plausibility validation and the solver, all tested.
-It's missing exactly one table. MIT licensed, and I'll PR it into python-OBD and
-the OBDb PID database so any app can pick it up. Anyone who helps gets credited.
-
-A PHEV would be especially welcome, since those carry 12 parameters rather
-than 6 and need solving separately.
-
----
-
-## Alternative: standalone post
-
-Use this only if thread 36805 turns out to be dead, or a moderator asks you to
-start a new one.
+## Standalone post text
 
 **Subject:** Trying to build an open-source OBFCM reader — need raw hex + your
 decoded values
 
 ---
 
-I've been reading through the OBFCM threads here and I'd like to try something,
-but I need a few of you to help.
+I've been reading the OBFCM threads here and I'd like to try something, but I
+need a few of you to help.
 
 Short version: EU 2018/1832 Annex XXII requires every car registered from
 Jan 2021 to keep lifetime counters of total fuel consumed and total distance,
@@ -84,18 +95,18 @@ are no apps that read it. Slovakia's inspection system does it at national
 scale with €10 ELM327 clones, so it's clearly not hard — the layout just isn't
 public.
 
-**You can make the paywall irrelevant.** Several of you have already posted
-decoded values here, like "Total Distance Travelled: 3960.1 km / Total Fuel
-Consumed: 358.33 L". If I also have the *raw hex* from the same car, the layout
-is solvable by constraint search — the resolutions are fine enough (0.01 L,
-0.1 km) that wrong offsets don't produce plausible scale factors, and three
-cars is enough to eliminate coincidences.
+**You can make the paywall irrelevant.** NEtech's post in thread 36805 shows
+the decoded output — "Total Distance Traveled: 3960.1 km / 3969.3 km, Total
+Fuel Consumed: 358.33 L / 361.36 L". If I also have the *raw hex* from the same
+car, the layout is solvable by constraint search: the resolutions are fine
+enough (0.01 L, 0.1 km) that wrong offsets don't produce plausible scale
+factors, and three cars eliminates coincidences.
 
 **What I'm asking for (about two minutes):**
 
 1. In any OBD app with a terminal (Car Scanner, OBD Auto Doctor, Torque),
    send `0917` and screenshot the reply
-2. Screenshot your VCDS address 33 → Mode 09 Type 17 screen
+2. Screenshot your VCDS `[33-OBD]` Mode 9 Type 17 screen
 3. Tell me make/model/year/engine, and whether it's a PHEV
 
 `0917` is service 09, Request Vehicle Information — read-only by definition.

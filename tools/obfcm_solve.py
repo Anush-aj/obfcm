@@ -166,10 +166,18 @@ def load_captures(path: str) -> List[Capture]:
     if isinstance(blob, dict):
         blob = [blob]
     out = []
+    skipped = []
     for i, item in enumerate(blob):
+        label = item.get("label", f"capture[{i}]")
+        # Half-captures (decoded values but no raw hex yet, or vice versa) are
+        # a normal intermediate state while data is being collected. Skip them
+        # with a note rather than crashing.
+        if not item.get("raw"):
+            skipped.append(label)
+            continue
         try:
             out.append(Capture(
-                label=item.get("label", f"capture[{i}]"),
+                label=label,
                 raw=parse_hex(item["raw"]),
                 # Skip nulls -- the probe writes them as placeholders for
                 # fields the tester has not filled in yet.
@@ -179,6 +187,12 @@ def load_captures(path: str) -> List[Capture]:
             ))
         except (KeyError, ValueError) as e:
             sys.exit(f"error in capture {i}: {e}")
+
+    if skipped:
+        print(f"Skipping {len(skipped)} half-capture(s) with no raw hex yet:")
+        for label in skipped:
+            print(f"  - {label}")
+        print()
     return out
 
 
@@ -478,6 +492,9 @@ def selftest() -> int:
 DEFAULT_FIELDS = [
     "total_fuel_l",
     "total_distance_km",
+    # Type 17 reports Recent/Lifetime pairs -- see Ross-Tech thread 36805.
+    "recent_fuel_l",
+    "recent_distance_km",
     # PHEV extras (EU 2018/1832 Annex XXII 3.2)
     "fuel_charge_depleting_l",
     "fuel_charge_increasing_l",
@@ -508,6 +525,10 @@ def main() -> int:
         return 2
 
     captures = load_captures(args.captures)
+    if not captures:
+        print("No complete captures yet -- each needs BOTH raw hex and decoded")
+        print("values from the same vehicle. See docs/HOW-TO-HELP.md.")
+        return 1
     fields = args.fields or sorted(
         {k for c in captures for k in c.known} or DEFAULT_FIELDS)
     return report(captures, fields, args.verbose)

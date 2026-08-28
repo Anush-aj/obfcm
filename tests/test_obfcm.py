@@ -17,19 +17,46 @@ import obfcm
 from obfcm import Powertrain, Record, Severity
 from obfcm.layouts import FieldSpec, Layout, layout_from_solver
 
-# A realistic record under the hypothesis layout:
-#   byte 0    record count
-#   bytes 1-4 fuel     35833 x 0.01 -> 358.33 L
-#   bytes 5-8 distance 39601 x 0.1  -> 3960.1 km
-PAYLOAD = bytes.fromhex("01" "00008BF9" "00009AB1")
+# A Type 17 record shaped like the real thing: four values as Recent/Lifetime
+# pairs, distance before fuel. Figures are the VW Golf 8 from Ross-Tech thread
+# 36805 (3960.1/3969.3 km, 358.33/361.36 L).
+PAYLOAD = bytes.fromhex("01"
+                        "00009AB1"     # recent distance  39601 x 0.1
+                        "00009B0D"     # total distance   39693 x 0.1
+                        "00008BF9"     # recent fuel      35833 x 0.01
+                        "00008D28")    # total fuel       36136 x 0.01
+
+# Same record with the Recent window unpopulated -- the sentinel case that
+# appears on most vehicles in that thread.
+PAYLOAD_SENTINEL = bytes.fromhex("01"
+                                 "FFFFFFFF" "00009B0D"
+                                 "FFFFFFFF" "00008D28")
+
+HYPOTHESIS_ID = "type17-hypothesis-v2"
 
 VERIFIED = Layout(
     id="test-verified", description="test", verified=True,
     fields={
-        "total_fuel_l": FieldSpec(1, 4, Fraction(1, 100)),
+        "recent_distance_km": FieldSpec(1, 4, Fraction(1, 10)),
         "total_distance_km": FieldSpec(5, 4, Fraction(1, 10)),
+        "recent_fuel_l": FieldSpec(9, 4, Fraction(1, 100)),
+        "total_fuel_l": FieldSpec(13, 4, Fraction(1, 100)),
     },
 )
+
+def isotp_frames(payload, mode="09", pid="17", header="7E8"):
+    """Encode a payload as the raw CAN frames an ELM327 prints with ATH1."""
+    data = bytes.fromhex(f"{int(mode, 16) + 0x40:02X}{pid}") + payload
+    if len(data) <= 7:
+        frames = [bytes([len(data)]) + data]
+    else:
+        frames = [bytes([0x10 | (len(data) >> 8), len(data) & 0xFF]) + data[:6]]
+        rest, seq = data[6:], 1
+        while rest:
+            frames.append(bytes([0x20 | (seq & 0x0F)]) + rest[:7])
+            rest, seq = rest[7:], seq + 1
+    return "".join(f"{header}{f.hex().upper()}\r" for f in frames) + "\r"
+
 
 results = []
 
@@ -118,6 +145,10 @@ def test_validate():
     check("absurd lifetime distance rejected",
           "IMPLAUSIBLE_DISTANCE" in codes(
               Record(total_fuel_l=500_000.0, total_distance_km=9_000_000.0)))
+    check("recent exceeding lifetime rejected",
+          "RECENT_EXCEEDS_LIFETIME" in codes(
+              Record(total_fuel_l=100.0, total_distance_km=1000.0,
+                     recent_fuel_l=500.0)))
     check("PHEV share > 1 rejected",
           "PHEV_SHARE_IMPOSSIBLE" in codes(
               Record(total_fuel_l=100.0, total_distance_km=1000.0,
@@ -159,15 +190,29 @@ def test_decode():
         check("refusal explains how to help", "HOW-TO-HELP" in str(e))
 
     rec = obfcm.decode(PAYLOAD, allow_unverified=True)
-    check("hypothesis decodes fuel", approx(rec.total_fuel_l, 358.33, 1e-9))
-    check("hypothesis decodes distance", approx(rec.total_distance_km, 3960.1, 1e-9))
+    check("hypothesis decodes lifetime fuel", approx(rec.total_fuel_l, 361.36, 1e-9))
+    check("hypothesis decodes lifetime distance",
+          approx(rec.total_distance_km, 3969.3, 1e-9))
+    check("hypothesis decodes recent pair",
+          approx(rec.recent_fuel_l, 358.33, 1e-9) and
+          approx(rec.recent_distance_km, 3960.1, 1e-9))
+    check("lifetime consumption matches NEtech's 10.98 km/l",
+          approx(rec.km_per_l, 10.98, 1e-2), f"{rec.km_per_l}")
+
+    # The sentinel must read as absent, never as -0.01 or 0.0. Returning a
+    # number here would silently corrupt every average computed from it.
+    sent = obfcm.decode(PAYLOAD_SENTINEL, allow_unverified=True)
+    check("sentinel decodes as absent, not a value",
+          sent.recent_fuel_l is None and sent.recent_distance_km is None)
+    check("sentinel does not block the lifetime pair",
+          approx(sent.total_fuel_l, 361.36, 1e-9))
     check("record marked unverified", rec.layout_verified is False)
     check("record keeps raw bytes", rec.raw == PAYLOAD)
-    check("record records layout id", rec.layout_id == "ice-hypothesis-v1")
+    check("record records layout id", rec.layout_id == HYPOTHESIS_ID)
 
     # Explicit layout injection
     rec2 = obfcm.decode(PAYLOAD, layout=VERIFIED)
-    check("explicit layout works", approx(rec2.total_fuel_l, 358.33, 1e-9))
+    check("explicit layout works", approx(rec2.total_fuel_l, 361.36, 1e-9))
     check("explicit layout marked verified", rec2.layout_verified is True)
 
     # Too short for any layout
@@ -206,7 +251,7 @@ def test_protocol():
         return send
 
     # First strategy succeeds.
-    ok_wire = "7E8100B49170100008B\r7E821F900009AB10000\r\r"
+    ok_wire = isotp_frames(PAYLOAD)
     r = obfcm.read(transport({"0917": ok_wire}))
     check("first strategy succeeds", r.ok and r.payload == PAYLOAD)
     check("reports strategy name", r.strategy == "classic-functional")
@@ -215,7 +260,7 @@ def test_protocol():
 
     # Falls through to UDS.
     seen.clear()
-    uds_wire = "7E8100B62F81701 00008BF9\r7E821 00009AB10000\r\r"
+    uds_wire = isotp_frames(PAYLOAD, mode="22", pid="F817")
     r = obfcm.read(transport({"22F817": uds_wire}))
     check("falls through to UDS", r.ok and r.strategy == "uds-functional",
           r.explain())
@@ -249,23 +294,32 @@ def test_layouts():
     check("no verified layout yet (honest default)",
           obfcm.verified_layouts() == [])
     check("hypothesis is marked unverified",
-          obfcm.LAYOUTS["ice-hypothesis-v1"].verified is False)
+          obfcm.LAYOUTS[HYPOTHESIS_ID].verified is False)
 
     # Closing the loop: solver output -> Layout -> decode.
     solved = layout_from_solver(
         "solved-v1",
-        {"total_fuel_l": (1, 4, "big", Fraction(1, 100)),
-         "total_distance_km": (5, 4, "big", Fraction(1, 10))},
+        {"recent_distance_km": (1, 4, "big", Fraction(1, 10)),
+         "total_distance_km": (5, 4, "big", Fraction(1, 10)),
+         "recent_fuel_l": (9, 4, "big", Fraction(1, 100)),
+         "total_fuel_l": (13, 4, "big", Fraction(1, 100))},
         source="3 vehicles",
     )
     check("solver output is verified", solved.verified)
-    check("solver output min_length", solved.min_length == 9)
+    check("solver output min_length", solved.min_length == 17)
     rec = obfcm.decode(PAYLOAD, layout=solved)
     check("solver output decodes correctly",
-          approx(rec.total_fuel_l, 358.33, 1e-9) and
-          approx(rec.total_distance_km, 3960.1, 1e-9))
+          approx(rec.total_fuel_l, 361.36, 1e-9) and
+          approx(rec.total_distance_km, 3969.3, 1e-9))
     check("field describe is readable",
-          "bytes[1:5]" in solved.fields["total_fuel_l"].describe())
+          "bytes[13:17]" in solved.fields["total_fuel_l"].describe(),
+          solved.fields["total_fuel_l"].describe())
+
+    # A multi-frame round trip through the real parser, so the test fixtures
+    # cannot drift away from what the wire format actually produces.
+    wire = isotp_frames(PAYLOAD)
+    check("payload survives an ISO-TP round trip",
+          bytes(obfcm.parse_response(wire, "09", "17")) == PAYLOAD)
 
 
 # ---------------------------------------------------------------------------

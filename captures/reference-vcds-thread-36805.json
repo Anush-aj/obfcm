@@ -1,0 +1,32 @@
+{
+  "source": "https://forums.ross-tech.com/index.php?threads/36805/",
+  "posted_by": ["NEtech (VCDS Distributor, Denmark)", "Eric (Ross-Tech staff)"],
+  "date": "2023-04",
+  "tool": "VCDS [33-OBD] Mode 9 Type 17",
+  "note": "DECODED VALUES ONLY -- no raw hex. Cannot be paired with fresh raw hex because counters have moved since 2023. Used to constrain the layout (field widths, sentinel value, ordering), not to solve it.",
+  "column_order": "Recent, then Lifetime -- confirmed by VCDS label ENG121352: 'Total Distance Traveled (Recent),Total Distance Traveled (Lifetime)'",
+  "sentinel": {
+    "distance_km": -0.1,
+    "fuel_l": -0.01,
+    "meaning": "not available / not supported. At scale 1/10 and 1/100 these are both raw -1, i.e. all bits set.",
+    "seen_on": "every vehicle whose Recent window is unpopulated, and on both columns of a battery-electric vehicle"
+  },
+  "vehicles": [
+    {"label": "Skoda Octavia Hybrid",        "kmpl": 30.21, "recent_distance_km": -0.1,   "total_distance_km": 1465.7,  "recent_fuel_l": -0.01,  "total_fuel_l": 48.51},
+    {"label": "Audi A3 Sportback e-tron",    "kmpl": 28.62, "recent_distance_km": -0.1,   "total_distance_km": 37357.5, "recent_fuel_l": -0.01,  "total_fuel_l": 1305.28},
+    {"label": "Seat Leon Hybrid",            "kmpl": 20.31, "recent_distance_km": -0.1,   "total_distance_km": 3702.9,  "recent_fuel_l": -0.01,  "total_fuel_l": 182.30},
+    {"label": "Audi Q5 Hybrid",              "kmpl": 18.45, "recent_distance_km": 365.0,  "total_distance_km": 3722.4,  "recent_fuel_l": 15.65,  "total_fuel_l": 201.71},
+    {"label": "Skoda Karoq Gasoline",        "kmpl": 14.86, "recent_distance_km": -0.1,   "total_distance_km": 11464.7, "recent_fuel_l": -0.01,  "total_fuel_l": 771.20},
+    {"label": "VW T-Cross Gasoline",         "kmpl": 14.14, "recent_distance_km": -0.1,   "total_distance_km": 989.4,   "recent_fuel_l": -0.01,  "total_fuel_l": 69.97},
+    {"label": "Audi A6 Avant Diesel",        "kmpl": 13.92, "recent_distance_km": -0.1,   "total_distance_km": 618.3,   "recent_fuel_l": -0.01,  "total_fuel_l": 44.41},
+    {"label": "Audi A6 Avant Hybrid",        "kmpl": 11.36, "recent_distance_km": 739.2,  "total_distance_km": 6087.0,  "recent_fuel_l": 68.67,  "total_fuel_l": 535.55},
+    {"label": "VW Golf 8 Gasoline",          "kmpl": 10.98, "recent_distance_km": 3960.1, "total_distance_km": 3969.3,  "recent_fuel_l": 358.33, "total_fuel_l": 361.36},
+    {"label": "Audi Q5 Hybrid (2)",          "kmpl": 10.42, "recent_distance_km": 0.0,    "total_distance_km": 8415.8,  "recent_fuel_l": 0.00,   "total_fuel_l": 807.49},
+    {"label": "MAN GTE Diesel",              "kmpl": 9.54,  "recent_distance_km": -0.1,   "total_distance_km": 1660.6,  "recent_fuel_l": -0.01,  "total_fuel_l": 173.90},
+    {"label": "Audi SQ7 Gasoline",           "kmpl": 8.66,  "recent_distance_km": 3037.6, "total_distance_km": 59663.0, "recent_fuel_l": 340.35, "total_fuel_l": 6886.07},
+    {"label": "Battery-electric vehicle",    "kmpl": null,  "recent_distance_km": 28.2,   "total_distance_km": 12904.4, "recent_fuel_l": -0.01,  "total_fuel_l": -0.01,
+     "note": "BEVs are excluded from OBFCM, so both fuel columns return the sentinel while distance is real."},
+    {"label": "VW Tiguan 2018 (Uwe's)",      "kmpl": 82.7,  "recent_distance_km": 15691.6, "total_distance_km": 15691.6, "recent_fuel_l": 189.66, "total_fuel_l": 189.66,
+     "note": "KNOWN BAD. Eric (Ross-Tech): 'type 17 makes no sense on that Tiguan, that's 1.2 L/100km'. Uwe: Type 16 implies an average speed of 378 km/h. NEtech: pre-dates the approval requirement, 'somebody put the code in program for testing and failed'. This is a documented instance of the ~12% corrupt-data rate, confirmed by the toolmaker's own staff."}
+  ]
+}

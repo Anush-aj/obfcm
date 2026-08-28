@@ -36,8 +36,21 @@ class Record:
     """
 
     # --- Annex XXII 3.1: all vehicles -------------------------------------
+    #
+    # VCDS output from a VW Golf 8 (Ross-Tech thread 36805) shows Type 17
+    # reports each parameter TWICE, as "Recent / Lifetime":
+    #
+    #     Total Distance Traveled : 3960.1 km / 3969.3 km
+    #     Total Fuel Consumed     : 358.33 L / 361.36 L
+    #
+    # The regulation only names the lifetime counters, so the recent pair is
+    # either an addition in the standard's field order or a VAG extension.
+    # Either way the record is twice the size assumed, and the solver must
+    # look for four values, not two.
     total_fuel_l: Optional[float] = None
     total_distance_km: Optional[float] = None
+    recent_fuel_l: Optional[float] = None
+    recent_distance_km: Optional[float] = None
 
     # --- Annex XXII 3.2: OVC-HEV (plug-in hybrid) only --------------------
     fuel_charge_depleting_l: Optional[float] = None
@@ -110,10 +123,18 @@ class Record:
             return None
         return min(1.0, off / self.total_distance_km)
 
+    @property
+    def recent_l_per_100km(self) -> Optional[float]:
+        """Consumption over the recent window, where the vehicle reports one."""
+        if not self.recent_fuel_l or not self.recent_distance_km:
+            return None
+        return self.recent_fuel_l * 100.0 / self.recent_distance_km
+
     def populated_fields(self) -> dict[str, float]:
         """Only the counters that actually decoded, for display and export."""
         names = (
             "total_fuel_l", "total_distance_km",
+            "recent_fuel_l", "recent_distance_km",
             "fuel_charge_depleting_l", "fuel_charge_increasing_l",
             "distance_charge_depleting_engine_off_km",
             "distance_charge_depleting_engine_on_km",

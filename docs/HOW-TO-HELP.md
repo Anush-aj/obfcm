@@ -47,16 +47,26 @@ know which.
 
 ### 2. The decoded values — from VCDS or OBDeleven
 
-- **VCDS**: address **33** (OBD-II) → **Mode 09**, **Type 17**. It's labelled
-  something like *"Vehicle Operation Data — Distance/Fuel Used"*.
+- **VCDS**: address **`[33-OBD]`** → **Mode 9, Type 17**, labelled
+  *"Vehicle Operation Data - Distance-Fuel Used, Recent/Lifetime"*.
 - **OBDeleven**: the equivalent lifetime fuel/distance readout.
 
-We need the two numbers it shows:
+It prints **four** numbers, as Recent/Lifetime pairs:
 
-- Total fuel consumed — e.g. `358.33 L`
-- Total distance travelled — e.g. `3960.1 km`
+```
+Type 17 - Vehicle Operation Data - Distance-Fuel Used, Recent/Lifetime:
+         Total Distance Traveled : 3960.1 km / 3969.3 km
+         Total Fuel Consumed : 358.33 L / 361.36 L
+```
 
-A screenshot is perfect.
+**All four, please** — the pairing is part of what we're solving.
+
+A screenshot is perfect. `-0.1 km` and `-0.01 L` are normal: that's the
+"not available" sentinel, and seeing where it lands is useful too.
+
+**Timing matters.** Take the `0917` reading and the VCDS reading in the same
+session. The counters move as you drive, so values from different days can't
+be matched up.
 
 ### 3. Your car
 

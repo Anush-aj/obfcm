@@ -46,6 +46,16 @@ class FieldSpec:
             return None
         raw = int.from_bytes(payload[self.offset:self.offset + self.width],
                              self.endian)
+        if raw == (1 << (self.width * 8)) - 1:
+            # All bits set is the "not available" sentinel. VCDS renders it by
+            # reading the field as signed, which is why Ross-Tech thread 36805
+            # shows "-0.01 L" and "-0.1 km" -- both are raw -1 through the
+            # 1/100 and 1/10 scales. It appears on every unpopulated Recent
+            # window, and on both fuel columns of a battery-electric vehicle
+            # (BEVs are outside OBFCM's scope).
+            #
+            # Returning 0.0 here would silently corrupt every average.
+            return None
         return float(raw * self.scale)
 
     def describe(self) -> str:
@@ -93,25 +103,33 @@ class Layout:
 LAYOUTS: Dict[str, Layout] = {
 
     # -----------------------------------------------------------------
-    # HYPOTHESIS ONLY -- NOT VERIFIED AGAINST ANY REAL VEHICLE.
+    # HYPOTHESIS -- the SHAPE is evidence-based, the OFFSETS are not.
     #
-    # Derived from the published resolutions (0.01 L, 0.1 km seen in Slovak
-    # PTI readouts and consistent with ICCT's remark that grid energy has
-    # "only one decimal place") plus the Annex XXII 3.1 parameter order, and
-    # assuming byte 0 of the payload is a record-count byte.
+    # Known from Ross-Tech thread 36805 (14 vehicles, VCDS output):
+    #   * Type 17 carries four values, not two: each parameter appears as a
+    #     Recent/Lifetime pair.
+    #   * Order is distance before fuel, Recent before Lifetime.
+    #   * Scales are 1/10 (km) and 1/100 (L).
+    #   * All-bits-set is the "not available" sentinel.
+    #   * Values reach 6,886.07 L and 59,663.0 km, needing 3 bytes minimum.
     #
-    # It is here so decode/validate/report can be tested without a car. It
-    # must not be trusted, and `verified=False` makes the library refuse it
-    # unless the caller explicitly asks.
+    # Still unknown: the actual byte offsets, the true field width (3 vs 4),
+    # and whether a record-count or length byte precedes the fields.
     # -----------------------------------------------------------------
-    "ice-hypothesis-v1": Layout(
-        id="ice-hypothesis-v1",
-        description="Conventional/HEV, Annex XXII 3.1 order (HYPOTHESIS)",
+    "type17-hypothesis-v2": Layout(
+        id="type17-hypothesis-v2",
+        description="Type 17 Distance-Fuel Used, Recent/Lifetime pairs (HYPOTHESIS)",
         verified=False,
-        source="inferred from published resolutions; no vehicle confirms it",
+        source=("Shape constrained by Ross-Tech thread 36805: VCDS label "
+                "ENG121352 gives the order as '(Recent), (Lifetime)', distance "
+                "before fuel. Largest observed values (6,886.07 L on an Audi "
+                "SQ7; 59,663.0 km) need 3 bytes at 1/100 and 1/10, so 4 bytes "
+                "is the natural field width. Offsets are still guesses."),
         fields={
-            "total_fuel_l": FieldSpec(offset=1, width=4, scale=Fraction(1, 100)),
+            "recent_distance_km": FieldSpec(offset=1, width=4, scale=Fraction(1, 10)),
             "total_distance_km": FieldSpec(offset=5, width=4, scale=Fraction(1, 10)),
+            "recent_fuel_l": FieldSpec(offset=9, width=4, scale=Fraction(1, 100)),
+            "total_fuel_l": FieldSpec(offset=13, width=4, scale=Fraction(1, 100)),
         },
     ),
 }
