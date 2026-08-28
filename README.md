@@ -116,7 +116,7 @@ if result.ok:
                              odometer_km=48_213)
     if verdict.usable:
         print(record.summary())
-        # 358.33 L  3,960.1 km  9.05 L/100km (11.05 kmpl)
+        # 361.36 L  3,969.3 km  9.10 L/100km (10.98 kmpl)
     else:
         print(verdict.explain())
 ```

@@ -16,47 +16,54 @@ been — see `captures/vw-golf8-netech-2023.json`.
 
 ## Plan A — message NEtech directly. Do this first.
 
-Best single lead in the project. They have the car, the tool, the data, and
-demonstrated willingness to share it publicly. **We already hold half of
-vehicle #1** — we need only the raw hex from the same car.
+The ask has shrunk. We no longer need decoded values — thread 36805 gave us
+fourteen vehicles' worth. **We need raw hex and decoded values from the same
+car in the same sitting**, from one cooperative owner. NEtech is the obvious
+person: they have the cars, the tool, and they published freely once already.
 
-> **Subject:** OBFCM Type 17 — could I ask for the raw hex from your Golf 8?
+> **Subject:** OBFCM Type 17 — one raw hex reading, if you have two minutes?
 >
 > Hi NEtech,
 >
-> Your April 2023 post "What is OBFCM.. information" is the clearest write-up
-> of Type 17 I've found anywhere. The thread is locked, so I hope a direct
-> message is alright.
+> Your April 2023 thread "What is OBFCM.. information" is the best public
+> documentation of Type 17 anywhere — I've been using it as a reference. It's
+> locked, so I hope a direct message is alright.
 >
-> I'm building an open-source OBFCM reader. The blocker is that the byte
-> layout is published only in SAE J1979-DA ($100–300) — the regulation gives
-> the parameter list but not the offsets or scaling, so no free tool can
-> decode it.
+> I'm building an open-source OBFCM reader, and your posts have already
+> settled most of it. From the fourteen vehicles you and Eric listed I could
+> work out that Type 17 carries Recent/Lifetime pairs rather than single
+> values, that the order is distance then fuel, that the scales are 0.1 km and
+> 0.01 L, and that `-0.1` / `-0.01` is an all-bits-set "not available"
+> sentinel rather than a reading. That last one would have quietly corrupted
+> every average I computed, so — thank you.
 >
-> Your post already gives me half the answer:
+> One thing is still missing, and it's the only thing between this and a
+> working library: **the raw hex**.
 >
->     Total Distance Traveled : 3960.1 km / 3969.3 km
->     Total Fuel Consumed     : 358.33 L / 361.36 L
+> VCDS shows the decoded values but not the bytes underneath, and the byte
+> offsets are exactly the part locked away in SAE J1979-DA. With both sides
+> from the same car, the layout is solvable by constraint search.
 >
-> If I had the **raw hex** from that same car, the layout becomes solvable by
-> constraint search — those resolutions (0.1 km, 0.01 L) are fine enough that
-> a wrong offset almost never produces a plausible scale factor.
+> So, if you have any 2021+ car and two minutes:
 >
-> So the ask, if you still have the Golf 8 and two minutes: in any OBD app
-> with a terminal, send `0917` and send me the raw reply. Read-only command,
-> and please blank the VIN.
+> 1. In any OBD app with a terminal (Car Scanner, OBD Auto Doctor, Torque),
+>    send `0917` and copy the raw reply
+> 2. Straight afterwards, the VCDS `[33-OBD]` Mode 9 Type 17 screen from that
+>    same car
 >
-> The decoder is already written and tested —
-> https://github.com/Anush-aj/obfcm — protocol handling, ISO-TP reassembly,
-> plausibility validation and the solver. It's missing exactly one table.
-> MIT licensed, and I'll PR it into python-OBD and the OBDb PID database so
-> any app can pick it up. Happy to credit you, or not, whichever you prefer.
+> It does have to be the same sitting — the counters move, so I can't pair
+> your 2023 figures with today's hex. Read-only command, and blank the VIN.
 >
-> Either way — thank you for posting that readout publicly. It's the reason
-> this is tractable at all.
+> The decoder is written and tested: https://github.com/Anush-aj/obfcm —
+> protocol handling, ISO-TP reassembly, plausibility validation and the
+> solver. Everything but that one table. MIT licensed, and I'll PR it into
+> python-OBD and the OBDb PID database so any app can pick it up. Happy to
+> credit you, or not, as you prefer.
+>
+> Incidentally, your Tiguan example is now a test case — my validator rejects
+> it at 1.21 L/100km, which is the same conclusion Eric and Uwe reached by eye.
 
-**If they reply with the hex, vehicle #1 is complete.** Two more and the
-layout is solved.
+**One reply with the hex finishes the project.**
 
 ## Plan B — a new thread on Ross-Tech
 
