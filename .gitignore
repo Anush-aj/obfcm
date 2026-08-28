@@ -3,6 +3,10 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+dist/
+build/
+*.egg-info/
+.eggs/
 
 # Local probe output -- may contain a VIN, never commit
 probe_result.json

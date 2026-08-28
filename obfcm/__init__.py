@@ -19,7 +19,7 @@ Quick start
 
     result = obfcm.read(send=my_transport)      # send(cmd) -> raw adapter text
     if result.ok:
-        record = obfcm.decode(result.payload)
+        record = obfcm.decode(result.payload, allow_unverified=True)
         verdict = obfcm.validate(record)
         if verdict.usable:
             print(record.summary())
@@ -29,9 +29,11 @@ Quick start
 Status
 ------
 Protocol, reassembly, decoding, validation and reporting are complete and
-tested. The byte layout itself is not yet solved -- see docs/HOW-TO-HELP.md.
-Until it is, decode() refuses to run unless you pass allow_unverified=True,
-and any Record it returns carries layout_verified=False.
+tested. Layout ``type17-v1`` is solved from a real paired capture but stays
+verified=False until it decodes three vehicles with no special-casing --
+see CONTRIBUTING.md. decode() therefore refuses unless you pass
+allow_unverified=True, and any Record it returns carries
+layout_verified=False.
 
 That refusal is deliberate. A decoder that confidently returns invented
 numbers would be worse than no decoder at all.
@@ -44,7 +46,7 @@ from .protocol import STRATEGIES, Attempt, ReadResult, Strategy, read
 from .record import Record
 from .validate import Finding, Powertrain, Severity, Verdict, validate
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0"
 
 __all__ = [
     # Reading

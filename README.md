@@ -137,6 +137,20 @@ corrupt-data rate that `validate()` exists to catch.
 
 ---
 
+## Install
+
+```bash
+pip install .
+```
+
+Python 3.9+, MIT, **zero runtime dependencies**. Not on PyPI yet — this repo
+is publish-ready; tagging a GitHub Release is what would upload it.
+
+```python
+import obfcm
+print(obfcm.__version__)   # 0.1.0
+```
+
 ## Usage
 
 ```python
@@ -144,7 +158,7 @@ import obfcm
 
 result = obfcm.read(send=my_transport)        # send(cmd) -> raw adapter text
 if result.ok:
-    record  = obfcm.decode(result.payload)
+    record  = obfcm.decode(result.payload, allow_unverified=True)
     verdict = obfcm.validate(record, powertrain=obfcm.Powertrain.ICE,
                              odometer_km=48_213)
     if verdict.usable:
@@ -154,9 +168,24 @@ if result.ok:
         print(verdict.explain())
 ```
 
+`allow_unverified=True` is required until `type17-v1` is confirmed on three
+vehicles ([CONTRIBUTING.md](CONTRIBUTING.md)). The Record then carries
+`layout_verified=False`.
+
 `send` is any callable that takes a command and returns the adapter's reply —
 pyserial, a socket, someone else's ELM327 wrapper, or a test stub. The library
 never talks to hardware itself.
+
+A python-OBD custom `OBDCommand` for `0917` lives in
+[`examples/python_obd_type17.py`](examples/python_obd_type17.py). That example
+is MIT documentation in this repo; it is not a python-OBD patch and does not
+relicense this code under the GPL.
+
+Apps that consume [OBDb](https://github.com/OBDb/SAEJ1979) signalsets can take
+the Mode 09 InfoType 17 / UDS `F817` commands from
+[`docs/obdb-saej1979-itid17.json`](docs/obdb-saej1979-itid17.json) and append
+them to `signalsets/v3/default.json`. F817/0917 is a standard SAE InfoType, so
+it belongs there, not in a per-car vehicle repo.
 
 ### Two design decisions worth knowing
 
@@ -172,6 +201,57 @@ consumption wrong "by several orders of magnitude". `validate()` catches those,
 and distinguishes them from *legitimate* counter resets — Annex XXII 5.3/5.4
 permit a reset on ECU replacement or battery disconnect, so a low reading is
 ambiguous, not faulty.
+
+---
+
+## Using it today without the library
+
+You do not need this package to read the counters. Any app that can send a
+custom PID will do — [Car Scanner ELM OBD2](https://www.carscanner.info/en/custompids/)
+and Torque Pro both can.
+
+Send command **`0917`** with header **`7E0`**. If that returns `NO DATA`, try
+the OBDonUDS alias **`22F817`** (same header, same formulas). Service 09 is
+read-only; so is UDS `22`.
+
+After stripping mode/PID/**index** so **A is the first of the 16 data bytes**:
+
+| Field | Formula | Units |
+|---|---|---|
+| Recent km | `(A*2^24+B*2^16+C*256+D)/10` | km |
+| Lifetime km | `(E*2^24+F*2^16+G*256+H)/10` | km |
+| Recent L | `(I*2^24+J*2^16+K*256+L)/100` | L |
+| Lifetime L | `(M*2^24+N*2^16+O*256+P)/100` | L |
+
+The wire record is `49 17 01` then those 16 bytes (four big-endian uint32s,
+Recent then Lifetime, distance then fuel). `01` is the item-index, same
+convention as VIN. All-bits-set (`FFFFFFFF`) means "not available" — do not
+treat it as −0.1 km / −0.01 L.
+
+Car Scanner and Torque skip the header, ISO-TP PCI, and `49 17` (or `62 F817`)
+automatically, so **A is the `01` item-index unless you skip one more byte**.
+If A is still that `01`, shift every letter by one (Recent km starts at B).
+
+Car Scanner does not treat `^` as exponent. Paste the expanded form:
+
+```
+Recent km:     (A*16777216+B*65536+C*256+D)/10
+Lifetime km:   (E*16777216+F*65536+G*256+H)/10
+Recent L:      (I*16777216+J*65536+K*256+L)/100
+Lifetime L:    (M*16777216+N*65536+O*256+P)/100
+```
+
+Torque Pro custom PIDs (one sensor each, header `7E0`, Mode/PID `0917`):
+
+| Name | Short | Equation | Min | Max | Unit |
+|---|---|---|---|---|---|
+| OBFCM recent distance | Rkm | `(A*16777216+B*65536+C*256+D)/10` | 0 | 1000000 | km |
+| OBFCM lifetime distance | Lkm | `(E*16777216+F*65536+G*256+H)/10` | 0 | 1000000 | km |
+| OBFCM recent fuel | RL | `(I*16777216+J*65536+K*256+L)/100` | 0 | 100000 | L |
+| OBFCM lifetime fuel | LL | `(M*16777216+N*65536+O*256+P)/100` | 0 | 100000 | L |
+
+Same equations work for `22F817`. Layout `type17-v1` is confirmed on **one**
+US Ford (2020 E-350); `verified=False` until two more vehicles agree.
 
 ---
 
