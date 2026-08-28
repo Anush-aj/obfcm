@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+
+# Local probe output -- may contain a VIN, never commit
+probe_result.json
+probe_raw.log
+obfcm_capture.json
+*.local.json
