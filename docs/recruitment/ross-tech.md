@@ -54,6 +54,11 @@ person: they have the cars, the tool, and they published freely once already.
 > It does have to be the same sitting — the counters move, so I can't pair
 > your 2023 figures with today's hex. Read-only command, and blank the VIN.
 >
+> **If VCDS debug or trace logging captures the raw frames underneath the
+> decoded output, that single file would be even better** — both sides from
+> one session, no second app needed. You'd know far better than me whether
+> that's how it works.
+>
 > The decoder is written and tested: https://github.com/Anush-aj/obfcm —
 > protocol handling, ISO-TP reassembly, plausibility validation and the
 > solver. Everything but that one table. MIT licensed, and I'll PR it into

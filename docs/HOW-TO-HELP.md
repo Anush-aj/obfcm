@@ -68,6 +68,13 @@ A screenshot is perfect. `-0.1 km` and `-0.01 L` are normal: that's the
 session. The counters move as you drive, so values from different days can't
 be matched up.
 
+### Easier alternative, if your tool supports it
+
+If VCDS (or any scan tool) can save a **debug / trace log** containing the raw
+CAN frames, that one file gives us both sides from the same session — no need
+to run a second app or worry about timing. Look for a debug level setting, or
+a trace/log option. Redact the VIN before sending.
+
 ### 3. Your car
 
 Make, model, year, engine, and whether it's a plug-in hybrid. PHEVs store 12
