@@ -9,12 +9,61 @@ annoying. Reply in that thread rather than starting a new one.
 Do not mention any future paid product. There isn't one yet, and hinting at it
 here will get the post ignored.
 
+**Before posting:** read the last page or two of the thread. This draft assumes
+people are still posting decoded values and nobody has solved the layout. If
+that has changed, adjust — a reply that ignores the recent conversation reads
+badly and wastes the best audience you have.
+
 ---
 
-## Post
+## REPLY to thread 36805 — use this one
 
-**Subject (if starting a new thread):** Trying to build an open-source OBFCM
-reader — need raw hex + your decoded values
+Short, joins the existing conversation, does not re-explain OBFCM to the people
+whose thread it is.
+
+---
+
+Reading back through this thread, a few of you have posted your decoded OBFCM
+figures from Mode 09 Type 17 — total fuel consumed and total distance. Those
+posts are more useful than they look, and I'd like to ask for one small
+addition.
+
+The reason no free tool reads OBFCM is that the byte layout is only published
+in SAE J1979-DA ($100–300). The regulation gives you the parameter list but not
+the offsets or the scaling, so everyone either buys the standard or does
+without.
+
+But your decoded values plus the **raw hex from the same car** make the layout
+recoverable by constraint search. The resolutions are fine enough (0.01 L,
+0.1 km) that a wrong offset almost never produces a plausible scale factor, and
+three cars is enough to rule out coincidence.
+
+So if you have a 2021+ car and two minutes: in any OBD app with a terminal
+(Car Scanner, OBD Auto Doctor, Torque), send `0917` and post the raw reply
+alongside your VCDS Type 17 figures. It's a read-only request — service 09 is
+Request Vehicle Information, it can't write or reset anything. Please blank
+your VIN.
+
+`NO DATA` is a useful answer too. I need to know which cars want `22 F8 17`
+instead, and I gather VAG and BMW differ here.
+
+I've written the decoder already — https://github.com/Anush-aj/obfcm — protocol
+handling, ISO-TP reassembly, plausibility validation and the solver, all tested.
+It's missing exactly one table. MIT licensed, and I'll PR it into python-OBD and
+the OBDb PID database so any app can pick it up. Anyone who helps gets credited.
+
+A PHEV would be especially welcome, since those carry 12 parameters rather
+than 6 and need solving separately.
+
+---
+
+## Alternative: standalone post
+
+Use this only if thread 36805 turns out to be dead, or a moderator asks you to
+start a new one.
+
+**Subject:** Trying to build an open-source OBFCM reader — need raw hex + your
+decoded values
 
 ---
 
