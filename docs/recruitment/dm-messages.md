@@ -12,13 +12,38 @@ minutes.
 
 ---
 
-## 1. jbakkerxli — send this first
+## Do this first: start a NEW thread, don't DM
 
-**Why him:** Netherlands, **2021 Audi A3 2.0 TDI** — a mandate-era car. In
-October 2024 he asked the forum how to read his OBFCM data, spent two days
-trying, and never got a working answer; his last post was still guessing
-("i think i found some cumulative fuelconsumption in instrumentclusterdata").
-He is not being asked a favour — he gets the thing he wanted.
+Both OBFCM threads are locked, so a new one is the only option — not
+necroposting. And it beats a DM on reach:
+
+| Person | Activity | Why they'd see it |
+|---|---|---|
+| **Uwe** | Administrator, 62,637 posts | Explained functional addressing in the Oct 2024 thread |
+| **Eric** | Ross-Tech staff, 5,333 posts | Spotted the bad Tiguan data himself |
+| **NEtech** | VCDS Distributor, 4,519 posts | Replied in *both* OBFCM threads — he watches the topic |
+| **TTT** | 2,388 posts since Jun 2023 | Confirmed pulling address-33 data successfully |
+
+Four demonstrably interested, active people versus one dormant account. Use the
+**standalone post text** in `ross-tech.md`.
+
+**Check "Last seen" on any member profile before spending a message on them.**
+
+---
+
+## 1. jbakkerxli — DORMANT, deprioritised
+
+**Do not lead with this one.** All seven of his posts are in that single thread
+across two days in October 2024, and he has not posted since — roughly 22
+months. His last post promised a scan he never delivered:
+
+> "I will post a scan as soon i have the laptop where vcds is installed ready
+> for internet. Since i use vcds its a stand-alone, update through usb."
+
+His VCDS machine is air-gapped, so even a willing reply means moving files off
+a disconnected laptop — a chore he already declined once.
+
+Strong motive, no activity. Send it only as a long shot after the thread is up.
 
 > **Subject:** Your OBFCM question from last year — I think I can finish it
 >
@@ -109,11 +134,19 @@ than a trade — so lead with credit, which is genuinely owed.
 
 ---
 
-## Also worth a message
+## 3. TTT — good third option
 
-**TTT** — Netherlands, 2,388 posts, confirmed in the same thread that he
-successfully pulled address-33 data ("I already pulled data from 33, thanks for
-the tip"). Use a trimmed version of the NEtech message.
+Netherlands, 2,388 posts since June 2023, so genuinely active. Confirmed in the
+Oct 2024 thread that he pulled address-33 data successfully ("I already pulled
+data from 33, thanks for the tip"). Trim the NEtech message; he needs no
+introduction to the topic.
+
+## Order of operations
+
+1. **New thread on Ross-Tech** — reaches all four at once
+2. **NEtech DM** if the thread gets no traction in a week
+3. **TTT DM**
+4. jbakkerxli, as a long shot
 
 ---
 
