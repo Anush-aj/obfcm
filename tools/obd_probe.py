@@ -476,19 +476,50 @@ def probe_obfcm(elm):
 
 def format_obfcm(data):
     """
-    Show the record without pretending to decode it.
+    Decode the record with the library and show the result.
 
-    Per EU 2018/1832 Annex XXII the record carries at minimum total fuel
-    consumed (litres) and total distance (km). The regulation publishes the
-    parameter LIST but not the byte order, widths or scaling -- those are in
-    SAE J1979-DA, which is paywalled. Until tools/obfcm_solve.py has been fed
-    real (raw hex + VCDS-decoded value) pairs from a few vehicles, any field
-    assignment here would be a guess, so we deliberately do not make one.
+    The layout is derived from a real paired capture (2020 Ford E-350,
+    CarDAQ-Plus 3) but is still marked unverified in obfcm/layouts.py, because
+    it has only been confirmed on that one US vehicle. So we decode, but we
+    say so.
     """
     if not data:
         return []
-    out = [f"    record: {len(data)} bytes -- {bytes(data).hex(' ')}"]
-    out.append("    Field layout is not yet known; see docs/recruitment/.")
+    payload = bytes(data)
+    out = [f"    record: {len(payload)} bytes -- {payload.hex(' ')}"]
+
+    try:
+        import obfcm
+        rec = obfcm.decode(payload, allow_unverified=True)
+    except Exception as e:                       # noqa: BLE001 - report, never crash
+        out.append(f"    could not decode: {e}")
+        return out
+
+    fields = rec.populated_fields()
+    if not fields:
+        out.append("    no fields decoded -- record shape may differ on this vehicle")
+        return out
+
+    out.append("")
+    for name, value in fields.items():
+        unit = "km" if name.endswith("_km") else ("L" if name.endswith("_l") else "")
+        out.append(f"      {name:<24} {value:>12,.2f} {unit}")
+
+    if rec.l_per_100km is not None:
+        out.append("")
+        out.append(f"      lifetime economy         "
+                   f"{rec.l_per_100km:>12,.2f} L/100km"
+                   f"   ({rec.km_per_l:.2f} kmpl, {rec.mpg_us:.1f} mpg US)")
+
+    verdict = obfcm.validate(rec)
+    if verdict.severity is not obfcm.Severity.OK:
+        out.append("")
+        for line in verdict.explain().splitlines():
+            out.append(f"    {line.strip()}")
+    if not rec.layout_verified:
+        out.append("")
+        out.append("    NOTE: layout confirmed on one US vehicle only. Treat these")
+        out.append("    numbers as provisional and send us the capture below.")
     return out
 
 

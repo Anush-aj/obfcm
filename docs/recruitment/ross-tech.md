@@ -1,5 +1,23 @@
 # Ross-Tech — thread 36805 is LOCKED
 
+**STATUS CHANGED — read this before sending anything.**
+
+The layout is **solved**, from a real paired capture (2020 Ford E-350,
+CarDAQ-Plus 3). Every message below was written when we still needed someone
+to solve it, and the ask has since shrunk enormously:
+
+| Then | Now |
+|---|---|
+| "Send raw hex *and* VCDS values, same sitting" | "Send the reply to `0917`" |
+| Needed 3 cars to solve | Need 1 European car to **confirm** |
+| "Help me work this out" | "I worked it out — does it hold on your car?" |
+
+Rewrite any message you send to reflect that. `../HOW-TO-HELP.md` and
+`reddit.md` are already updated; use those as the model.
+
+---
+
+
 **Checked 28 Aug 2026: thread 36805 shows "Not open for further replies."**
 
 It is also not what I assumed. It is not an ongoing conversation with several
@@ -150,7 +168,7 @@ on legacy service 09 or needs `22 F8 17`.
 I'd particularly like one PHEV, since those store 12 parameters instead of 6
 and will need solving separately.
 
-Repo (library is written and tested, just needs the layout):
+Repo (layout solved from a real capture; needs confirming on more cars):
 https://github.com/Anush-aj/obfcm
 
 Everything goes out MIT-licensed, and I'll PR it into python-OBD and the OBDb

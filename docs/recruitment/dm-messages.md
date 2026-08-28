@@ -1,5 +1,23 @@
 # The two messages — copy, paste, send
 
+**STATUS CHANGED — read this before sending anything.**
+
+The layout is **solved**, from a real paired capture (2020 Ford E-350,
+CarDAQ-Plus 3). Every message below was written when we still needed someone
+to solve it, and the ask has since shrunk enormously:
+
+| Then | Now |
+|---|---|
+| "Send raw hex *and* VCDS values, same sitting" | "Send the reply to `0917`" |
+| Needed 3 cars to solve | Need 1 European car to **confirm** |
+| "Help me work this out" | "I worked it out — does it hold on your car?" |
+
+Rewrite any message you send to reflect that. `../HOW-TO-HELP.md` and
+`reddit.md` are already updated; use those as the model.
+
+---
+
+
 Public searching is exhausted (GitHub repos/issues/PRs, `F817`, Ross-Tech,
 MHHAuto, BRISKODA). Every hit is decoded values, an OEM cloud API, or "which
 tool reads this?". **Raw OBFCM hex is not on the public internet**, and that
